@@ -49,11 +49,29 @@ def _letter_from_rate(rate: float) -> str:
 def grade_companies(
     jobs: list[Job],
     reports: list[FraudReport],
+    full_corpus: dict[str, Job] | None = None,
 ) -> list[CompanyGrade]:
+    """Grade companies on hiring trustworthiness.
+
+    If full_corpus is provided, grades reflect ALL of a company's postings
+    in the corpus, not just the ones that matched the user's resume.
+    """
     by_uid = {rp.job_uid: rp for rp in reports}
-    by_company: dict[tuple[str, str], list[Job]] = {}
+
+    # Find which companies appeared in the matched results
+    matched_companies: set[str] = set()
     for j in jobs:
-        by_company.setdefault((j.company, j.source), []).append(j)
+        matched_companies.add(j.company)
+
+    # Build company groups from full corpus if available
+    by_company: dict[tuple[str, str], list[Job]] = {}
+    if full_corpus:
+        for j in full_corpus.values():
+            if j.company in matched_companies:
+                by_company.setdefault((j.company, j.source), []).append(j)
+    else:
+        for j in jobs:
+            by_company.setdefault((j.company, j.source), []).append(j)
 
     grades: list[CompanyGrade] = []
     for (company, source), cjobs in by_company.items():
@@ -69,17 +87,22 @@ def grade_companies(
         repeats = sum(1 for c in title_counts.values() if c > 1)
         repost_rate = repeats / len(cjobs) if cjobs else 0.0
 
-        flagged_rate = len(flagged) / len(cjobs) if cjobs else 0.0
+        # Flagged rate uses fraud reports where available, falls back to
+        # behavioral signals (stale postings, reposts) for un-scored jobs
+        scored_count = len([j for j in cjobs if j.uid in by_uid])
+        flagged_rate = len(flagged) / max(scored_count, 1) if scored_count else 0.0
         avg_score = sum(scores) / len(scores) if scores else 0.0
         letter = _letter_from_rate(flagged_rate)
 
         reasons: list[str] = []
         if flagged_rate >= 0.12:
-            reasons.append(f"{int(flagged_rate * 100)}% of listings flagged as ghost-risk")
+            reasons.append(f"{int(flagged_rate * 100)}% of scored listings flagged")
         if median_days > 60:
             reasons.append(f"median posting age {int(median_days)} days")
         if repost_rate > 0.20:
-            reasons.append(f"{int(repost_rate * 100)}% of listings have duplicate titles")
+            reasons.append(f"{int(repost_rate * 100)}% duplicate titles")
+        if len(cjobs) > 100:
+            reasons.append(f"{len(cjobs)} total postings (high volume)")
         if not reasons:
             reasons.append("No significant ghost-job indicators")
 

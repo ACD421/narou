@@ -15,7 +15,9 @@ data/jobs.sqlite
 data/jobs.sqlite-journal
 data/jobs.sqlite-wal
 data/jobs.sqlite-shm
-data/cache/
+data/cache/*
+!data/cache/stage1_index.*.npz
+!data/cache/stage1_index.pkl
 data/labeled/*.csv
 !data/labeled/.gitkeep
 data/samples/*.pdf
