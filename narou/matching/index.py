@@ -16,9 +16,15 @@ import numpy as np
 from scipy import sparse
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from pathlib import Path as _Path
+
 from ..config import CACHE_DIR, DB_PATH
 from ..schema import Job
 from ..storage import Database
+
+
+def _is_cloud() -> bool:
+    return _Path(__file__).resolve().as_posix().startswith("/mount/src/")
 
 
 _INDEX_FILE = CACHE_DIR / "stage1_index.npz"
@@ -63,12 +69,16 @@ def build_stage1_index(
     job_uids = [j.uid for j in jobs]
     companies = [j.company for j in jobs]
 
+    cloud = _is_cloud()
+    char_feats = 40_000 if cloud else 80_000
+    word_feats = 30_000 if cloud else 60_000
+
     vec_char = TfidfVectorizer(
         analyzer="char_wb",
         ngram_range=(3, 4),
         min_df=2,
         max_df=0.9,
-        max_features=80_000,
+        max_features=char_feats,
         sublinear_tf=True,
         norm="l2",
         lowercase=True,
@@ -81,7 +91,7 @@ def build_stage1_index(
         ngram_range=(1, 2),
         min_df=2,
         max_df=0.9,
-        max_features=60_000,
+        max_features=word_feats,
         sublinear_tf=True,
         norm="l2",
         lowercase=True,
