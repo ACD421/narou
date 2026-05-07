@@ -5,14 +5,17 @@ on:
     - cron: '0 6 * * 1,4'  # Mon and Thu at 6am UTC
   workflow_dispatch:  # Manual trigger
 
+permissions:
+  contents: write
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d  # v5.1.0
         with:
           python-version: '3.12'
 

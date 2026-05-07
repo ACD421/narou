@@ -14,8 +14,16 @@ class ParseError(Exception):
     pass
 
 
+_MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+_MAX_PDF_PAGES = 15
+
+
 def _parse_pdf_bytes(data: bytes) -> str:
+    if len(data) > _MAX_FILE_SIZE:
+        raise ParseError("File too large (max 5 MB)")
     with pdfplumber.open(io.BytesIO(data)) as pdf:
+        if len(pdf.pages) > _MAX_PDF_PAGES:
+            raise ParseError(f"PDF has {len(pdf.pages)} pages (max {_MAX_PDF_PAGES})")
         pages = []
         for page in pdf.pages:
             txt = page.extract_text() or ""
