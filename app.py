@@ -481,16 +481,25 @@ def _render_corpus_status() -> None:
     cols[0].metric("Jobs", f"{stats.get('total_jobs', 0):,}")
     cols[1].metric("Companies", f"{stats.get('distinct_companies', 0):,}")
 
+    # Show when the corpus was last refreshed
+    from datetime import datetime, timezone
+    last_refresh = db.crawl_meta_get("last_crawl_finished_at")
+    if last_refresh:
+        try:
+            ts = float(last_refresh)
+            dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+            st.caption(f"Last updated: {dt.strftime('%b %d, %Y %H:%M UTC')}")
+        except (ValueError, OSError):
+            pass
+
     try:
         idx = load_index_cached()
         idx_info = index_stats(idx)
-        age = int(idx_info.get("age_sec", 0))
         st.caption(
-            f"Index built · {idx_info.get('corpus_size', 0):,} jobs · "
-            f"{age // 60} min old"
+            f"Index: {idx_info.get('corpus_size', 0):,} jobs indexed"
         )
-    except Exception as e:
-        st.caption(f"Index: not yet built ({e})")
+    except Exception:
+        st.caption("Index: building...")
 
     # Background crawler status
     cs = crawl_state()
