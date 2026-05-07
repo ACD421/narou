@@ -158,6 +158,10 @@ def _search_depth_label(val: int) -> tuple[str, str]:
     return "Maximum -- reranks nearly everything, slowest", _RED
 
 
+def _is_cloud_env() -> bool:
+    return Path(__file__).resolve().as_posix().startswith("/mount/src/")
+
+
 # ---------- Seed corpus + index ----------
 
 _INDEX_RELEASE = "https://github.com/ACD421/narou/releases/download/v1.0-data"
@@ -495,17 +499,23 @@ def _render_corpus_status() -> None:
         )
 
     is_empty = corpus_is_empty()
-    btn_label = "Seed corpus now" if is_empty else "Refresh corpus now"
-    if st.button(btn_label, use_container_width=True, type="primary" if is_empty else "secondary"):
-        t = crawl_in_background(db, min_interval_sec=0)
-        if t is None:
-            st.warning("A crawl is already running.")
+    if _is_cloud_env():
+        if is_empty:
+            st.warning("Corpus is loading. Please wait a moment and refresh the page.")
         else:
-            st.info(
-                "Crawl started. First run takes ~1-2 minutes and "
-                "populates ~10-20k jobs from ~300 live Greenhouse boards."
-            )
-            _invalidate_corpus_caches()
+            st.caption("Corpus auto-updates every Mon and Thu.")
+    else:
+        btn_label = "Seed corpus now" if is_empty else "Refresh corpus now"
+        if st.button(btn_label, use_container_width=True, type="primary" if is_empty else "secondary"):
+            t = crawl_in_background(db, min_interval_sec=0)
+            if t is None:
+                st.warning("A crawl is already running.")
+            else:
+                st.info(
+                    "Crawl started. First run takes ~1-2 minutes and "
+                    "populates ~10-20k jobs from ~300 live Greenhouse boards."
+                )
+                _invalidate_corpus_caches()
 
 
 # ---------- Main body ----------
