@@ -10,6 +10,7 @@ venv/
 *.log
 
 # Runtime data — built/crawled per deployment, never committed
+# (jobs_seed.sqlite.gz IS tracked — it's the pre-built corpus)
 data/jobs.sqlite
 data/jobs.sqlite-journal
 data/jobs.sqlite-wal

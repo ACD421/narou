@@ -156,6 +156,23 @@ def _search_depth_label(val: int) -> tuple[str, str]:
     return "Maximum -- reranks nearly everything, slowest", _RED
 
 
+# ---------- Seed corpus ----------
+
+
+def _seed_from_gz() -> None:
+    """On first launch, decompress the bundled seed corpus if no DB exists."""
+    import gzip
+    import shutil
+    seed = DB_PATH.parent / "jobs_seed.sqlite.gz"
+    if DB_PATH.exists() or not seed.exists():
+        return
+    with gzip.open(seed, "rb") as gz, open(DB_PATH, "wb") as out:
+        shutil.copyfileobj(gz, out)
+
+
+_seed_from_gz()
+
+
 # ---------- Cached singletons ----------
 
 

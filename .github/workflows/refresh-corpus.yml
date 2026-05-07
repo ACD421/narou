@@ -1,0 +1,67 @@
+name: Refresh Job Corpus
+
+on:
+  schedule:
+    - cron: '0 6 * * 1,4'  # Mon and Thu at 6am UTC
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Crawl and build corpus
+        run: |
+          python -c "
+          import warnings, gzip, shutil
+          warnings.filterwarnings('ignore', message='Trying to unpickle estimator', module='sklearn')
+          import sys, time
+          sys.path.insert(0, '.')
+          from narou.storage import Database
+          from narou.ingestion.crawler import crawl_corpus, load_slugs, SEED_GREENHOUSE, SEED_LEVER
+          from narou.matching.index import build_stage1_index
+          from narou.fraud import build_dedup_index
+          from narou.config import DB_PATH
+
+          gh = load_slugs(SEED_GREENHOUSE)[:300]
+          lv = load_slugs(SEED_LEVER)
+          db = Database(DB_PATH)
+          print(f'Crawling {len(gh)+len(lv)} boards...')
+          t0 = time.time()
+          res = crawl_corpus(db, greenhouse_slugs=gh, lever_slugs=lv, max_workers=12, timeout=10)
+          print(f'Crawl: {res.boards_ok} ok, {res.jobs_seen} jobs, {time.time()-t0:.0f}s')
+
+          print('Building index...')
+          idx = build_stage1_index(db)
+          print(f'Index: {idx.corpus_size} jobs')
+
+          print('Building dedup...')
+          build_dedup_index(db)
+
+          print('Compressing seed...')
+          seed = DB_PATH.parent / 'jobs_seed.sqlite.gz'
+          with open(DB_PATH, 'rb') as f_in, gzip.open(seed, 'wb', compresslevel=6) as f_out:
+              shutil.copyfileobj(f_in, f_out)
+          print(f'Seed: {seed.stat().st_size / 1024 / 1024:.1f} MB')
+          "
+
+      - name: Commit seed corpus
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f data/jobs_seed.sqlite.gz
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto-refresh job corpus $(date -u +%Y-%m-%d)"
+            git push
+          fi
