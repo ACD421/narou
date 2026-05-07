@@ -208,7 +208,24 @@ def rank_jobs_global(
             stage1_lexical=s1_by_uid[uid],
             job_sgm=sgm_map.get(uid),
         )
+        # Freshness factor: penalize stale postings, boost recent ones
+        sec.overall *= _freshness_factor(job.days_active)
         ranked.append(RankedMatch(job=job, scores=sec, stage1_score=s1_by_uid[uid]))
 
     ranked.sort(key=lambda r: -r.overall)
     return ranked[:top_n]
+
+
+def _freshness_factor(days_active: int | None) -> float:
+    """Scale match score by posting age. Fresh jobs rank higher."""
+    if days_active is None:
+        return 1.0
+    if days_active < 7:
+        return 1.05
+    if days_active < 30:
+        return 1.0
+    if days_active < 60:
+        return 0.95
+    if days_active < 90:
+        return 0.88
+    return 0.80
