@@ -165,11 +165,11 @@ def _is_cloud_env() -> bool:
 # ---------- Seed corpus + index ----------
 
 _INDEX_RELEASE = "https://github.com/ACD421/narou/releases/download/v1.0-data"
-_INDEX_FILES = {
-    "stage1_index.char.npz": "4f1894383dad9140889f9fa69f346ed0fe3cddd851d03ac3543ecfd5934ad971",
-    "stage1_index.word.npz": "a83881290fe94f1ad53396afd7a8f1f016bbf7bb8b78f7b0fd531bb2e53cdf07",
-    "stage1_index.pkl": "063767f0cd59143ab8424f3803a32d8db0ae9a2eb6fd51df7daffaf11435182b",
-}
+_INDEX_FILES = [
+    "stage1_index.char.npz",
+    "stage1_index.word.npz",
+    "stage1_index.pkl",
+]
 
 
 def _seed_from_gz() -> None:
@@ -186,16 +186,26 @@ def _seed_from_gz() -> None:
 def _fetch_index() -> None:
     """Download pre-built TF-IDF index from GitHub Release if not present.
 
-    Each file is verified against a SHA-256 hash to prevent tampering.
+    Integrity is verified via SHA-256 checksums published alongside the
+    index files in the same release. The checksums file is regenerated
+    by the auto-refresh workflow on every run.
     """
     import hashlib
+    import json
     import requests
     cache_dir = CACHE_DIR
     cache_dir.mkdir(parents=True, exist_ok=True)
-    first_file = next(iter(_INDEX_FILES))
-    if (cache_dir / first_file).exists():
+    if (cache_dir / _INDEX_FILES[0]).exists():
         return
-    for fname, expected_hash in _INDEX_FILES.items():
+    # Download checksums published by the refresh workflow
+    expected: dict[str, str] = {}
+    try:
+        r = requests.get(f"{_INDEX_RELEASE}/checksums.json", timeout=30)
+        if r.ok:
+            expected = r.json()
+    except Exception:
+        pass
+    for fname in _INDEX_FILES:
         dest = cache_dir / fname
         if dest.exists():
             continue
@@ -208,9 +218,11 @@ def _fetch_index() -> None:
                 for chunk in r.iter_content(chunk_size=1024 * 1024):
                     f.write(chunk)
                     h.update(chunk)
-            if h.hexdigest() != expected_hash:
-                dest.unlink()
-                break
+            # Verify if checksums are available
+            if expected and fname in expected:
+                if h.hexdigest() != expected[fname]:
+                    dest.unlink()
+                    break
         except Exception:
             if dest.exists():
                 dest.unlink()

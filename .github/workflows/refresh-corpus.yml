@@ -78,6 +78,21 @@ jobs:
             git push
           fi
 
+      - name: Generate checksums
+        run: |
+          python -c "
+          import hashlib, json, os
+          files = ['stage1_index.char.npz', 'stage1_index.word.npz', 'stage1_index.pkl']
+          checksums = {}
+          for f in files:
+              p = f'data/cache/{f}'
+              h = hashlib.sha256(open(p, 'rb').read()).hexdigest()
+              checksums[f] = h
+              print(f'{f}: {h}')
+          with open('data/cache/checksums.json', 'w') as out:
+              json.dump(checksums, out)
+          "
+
       - name: Update release index files
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -88,4 +103,5 @@ jobs:
             --notes "Auto-refreshed $(date -u +%Y-%m-%d). TF-IDF index for $(wc -l < data/boards_greenhouse_seed.txt) boards." \
             data/cache/stage1_index.char.npz \
             data/cache/stage1_index.word.npz \
-            data/cache/stage1_index.pkl
+            data/cache/stage1_index.pkl \
+            data/cache/checksums.json
