@@ -79,6 +79,57 @@ def _style_risk_col(s: pd.Series) -> list[str]:
     return [_bar_css(v, 100, _risk_color(v)) for v in s]
 
 
+def _days_color(days) -> str:
+    """Older postings are more suspicious. Green < 14, yellow 14-44, orange 45-89, red 90+."""
+    try:
+        d = float(days)
+    except (TypeError, ValueError):
+        return ""
+    if d < 14:
+        return _GREEN
+    if d < 45:
+        return _YELLOW
+    if d < 90:
+        return _ORANGE
+    return _RED
+
+
+def _style_days_col(s: pd.Series) -> list[str]:
+    styles = []
+    for v in s:
+        c = _days_color(v)
+        if c:
+            styles.append(f"color: {c}; font-weight: 600;")
+        else:
+            styles.append("")
+    return styles
+
+
+def _freshness_label(days_active: int | None) -> str:
+    if days_active is None:
+        return "-"
+    if days_active < 7:
+        return "New"
+    if days_active < 14:
+        return "Fresh"
+    if days_active < 45:
+        return "Open"
+    if days_active < 90:
+        return "Aging"
+    return "Stale"
+
+
+def _style_freshness_col(s: pd.Series) -> list[str]:
+    label_colors = {
+        "New": _GREEN, "Fresh": _GREEN, "Open": _YELLOW,
+        "Aging": _ORANGE, "Stale": _RED,
+    }
+    return [
+        f"color: {label_colors.get(v, '')}; font-weight: 600;" if v in label_colors else ""
+        for v in s
+    ]
+
+
 def _ghost_threshold_label(val: float) -> tuple[str, str]:
     """Return (description, hex_color) for the current ghost-risk threshold."""
     if val <= 0.25:
@@ -456,20 +507,23 @@ def _render_matches(result) -> None:
             "Company": m.job.company,
             "Location": m.job.location or "-",
             "Source": m.job.source,
-            "Days open": m.job.days_active if m.job.days_active is not None else "-",
+            "Days": m.job.days_active if m.job.days_active is not None else "-",
+            "Freshness": _freshness_label(m.job.days_active),
             "URL": m.job.url or "",
         })
     df = pd.DataFrame(rows)
 
     display_cols = [
         "Rank", "Match %", "Ghost %", "Risk", "Title", "Company",
-        "Location", "Source", "Days open", "URL",
+        "Location", "Source", "Days", "Freshness", "URL",
     ]
     styled = (
         df[display_cols]
         .style
         .apply(_style_match_col, subset=["Match %"])
         .apply(_style_risk_col, subset=["Ghost %"])
+        .apply(_style_days_col, subset=["Days"])
+        .apply(_style_freshness_col, subset=["Freshness"])
         .format({"Match %": "{:.0f}%", "Ghost %": "{:.0f}%"})
     )
     st.dataframe(
