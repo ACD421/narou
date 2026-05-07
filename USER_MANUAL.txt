@@ -1,0 +1,253 @@
+================================================================
+  NAROU - AI Job Search Assistant
+  User Manual
+  HCAI 4350 - Team Narou
+================================================================
+
+
+WHAT THIS IS
+----------------------------------------------------------------
+Narou matches your resume against thousands of live job postings
+from Greenhouse (the ATS used by most tech companies). It ranks
+jobs by how well they fit your skills, flags suspicious ghost
+postings, grades companies on hiring trustworthiness, and
+suggests resume improvements. Everything runs locally on your
+computer. No data is uploaded anywhere.
+
+
+REQUIREMENTS
+----------------------------------------------------------------
+- Windows 10+, macOS 12+, or Linux
+- Python 3.10 or later (download from python.org if needed)
+- Internet connection (for pip install + first-run job crawl)
+
+
+STEP BY STEP SETUP
+----------------------------------------------------------------
+
+Step 1: Download and unzip the project folder
+
+   Get the narou folder onto your computer (USB, zip, or share).
+   Put it somewhere easy to find, like Desktop or Documents.
+
+Step 2: Open the narou folder
+
+   You should see files like app.py, install.bat, run.bat,
+   install.sh, run.sh, and folders narou/, models/, data/.
+
+Step 3: Run the installer for your OS
+
+   Windows:  double-click install.bat
+   macOS:    open Terminal, cd into the folder, then run:
+                 chmod +x install.sh run.sh
+                 ./install.sh
+   Linux:    same as macOS
+
+   The installer will:
+   - Verify you have Python 3.10+
+   - Create a Python virtual environment (.venv folder)
+   - Upgrade pip and clear any stale index cache
+   - Install all required packages (streamlit, numpy, etc.)
+   - Create the data directories
+
+   This takes 1 to 3 minutes depending on your internet speed.
+   When you see "Setup complete!", you are done.
+
+   You only need to do this once.
+
+Step 4: Start the app
+
+   Windows:  double-click run.bat
+   macOS:    ./run.sh
+   Linux:    ./run.sh
+
+   A terminal window will open and stay open. After a few
+   seconds, your default web browser will open automatically
+   with the Narou interface.
+
+   If the browser does not open, manually go to:
+   http://localhost:8501
+
+Step 5: Wait for the first-run job crawl
+
+   On the very first launch, the app will automatically start
+   crawling Greenhouse for job postings. You will see a progress
+   bar in the sidebar under "Corpus" that says something like
+   "Crawling 200/1163 boards..."
+
+   This takes about 1 to 2 minutes. You can upload your resume
+   while it runs. Once the crawl finishes and shows a job count
+   (e.g. "Jobs: 15,000"), you are ready to analyze.
+
+
+HOW TO USE THE APP
+----------------------------------------------------------------
+
+Step 1: Upload your resume
+
+   In the left sidebar under "1. Your resume", click the upload
+   area and select a PDF or DOCX file. The app will parse it
+   and show how many sections and skills it found.
+
+Step 2: (Optional) Add a focus
+
+   Under "2. Focus", type a short phrase to tilt the ranking
+   toward specific interests. Examples:
+   - "remote senior backend python"
+   - "offensive security red team"
+   - "UX research healthcare"
+   - "entry level data analyst"
+
+   Leave this blank to let your resume speak for itself.
+
+Step 3: Click Analyze
+
+   Under "4. Analyze", click the Analyze button. The app
+   will rank your resume against every job in the corpus. This
+   takes about 1 to 3 seconds after the first run.
+
+Step 4: Review your results
+
+   The main area has four tabs:
+
+   MATCHES tab:
+   - A table of your top matched jobs, sorted best to worst
+   - Each row shows: match percentage, ghost risk percentage,
+     job title, company, location, and a link to the posting
+   - Click any row in the "Inspect a match" dropdown to see:
+     * Full job description
+     * Section-by-section match breakdown (title, skills,
+       summary, experience, lexical)
+     * Which of your skills appear in the posting
+     * Your skills not mentioned in this posting
+     * If flagged as ghost: reasons why it looks suspicious
+
+   RESUME INSIGHTS tab:
+   - Missing keywords: terms that appear in your top matches
+     but not on your resume (consider adding them)
+   - Strong keywords: skills already well-aligned
+   - Section advice: specific suggestions per resume section
+   - Rephrase hints: concrete wording improvements
+   - Common themes: patterns across your target roles
+
+   COMPANY GRADES tab:
+   - Each company gets a letter grade (A through F)
+   - Based on: percentage of flagged postings, median days
+     active, repost rate, posting volume
+   - Companies that mass-repost identical descriptions or
+     keep stale listings get lower grades
+
+   SYSTEM METRICS tab:
+   - Corpus health: total jobs, boards attempted, feed uptime
+   - Feature cache and SGM cache coverage
+   - Run history showing past analyses
+   - Engine info: SGM model size, classifier status
+
+
+WHAT IS GHOST DETECTION?
+----------------------------------------------------------------
+A "ghost" job posting is one that is not a real open position.
+Common signs include:
+- The same description posted dozens of times across boards
+- Vague language with no specific technical requirements
+- Postings that have been active for hundreds of days
+- Companies with extremely high repost rates
+
+The ghost risk percentage estimates how likely a posting is to
+be fake or stale. Postings flagged as ghost scored above the
+threshold (default 55%). You can adjust this threshold in the
+sidebar under "3. Settings".
+
+
+ADJUSTING SETTINGS
+----------------------------------------------------------------
+In the sidebar under "3. Settings":
+
+- Results to show: How many matches to display (5 to 50)
+- Fake-job sensitivity: The cutoff for flagging a job as
+  suspicious (lower = stricter, higher = more lenient)
+- Advanced > Rerank depth: How many top candidates from the
+  initial search get a deep comparison to your resume. All jobs
+  are searched instantly; this controls how many get the thorough
+  analysis. Default of 150 is a good balance.
+
+
+REFRESHING THE JOB CORPUS
+----------------------------------------------------------------
+The job corpus is cached locally in data/jobs.sqlite. To get
+fresh postings, click "Refresh corpus now" in the sidebar under
+"Corpus". This runs a background crawl that takes 1 to 2
+minutes and does not block the UI.
+
+
+STOPPING THE APP
+----------------------------------------------------------------
+To stop Narou, go to the command prompt window that opened when
+you double-clicked run.bat and press Ctrl+C. Then close the
+window.
+
+
+TROUBLESHOOTING
+----------------------------------------------------------------
+
+"install.bat says Python is not found"
+   Install Python 3.10+ from python.org. During installation,
+   check the box that says "Add Python to PATH". Then run
+   install.bat again.
+
+"install.bat fails to install packages"
+   Check your internet connection. If you are behind a corporate
+   proxy, you may need to configure pip's proxy settings.
+
+"ERROR: No matching distribution found for streamlit..."
+   This means your pip's index cache is stale (it hasn't refreshed
+   its view of PyPI in a while) OR your Python is older than 3.10.
+
+   Fix 1 (most common): delete the .venv folder and run the
+   installer again. The updated installer force-clears the pip
+   cache, which resolves this.
+
+   Fix 2: check your Python version. Open a terminal and run:
+       python --version
+   If it shows 3.9.x or older, install Python 3.10+ from
+   python.org and re-run the installer.
+
+   Fix 3 (corporate networks): your IT may force pip through an
+   internal mirror that is out of date. Try from a personal
+   network, or ask IT to refresh the PyPI mirror.
+
+"The browser shows an error page"
+   Wait 10 seconds and refresh. Streamlit sometimes takes a
+   moment to start on the first launch.
+
+"Analyze button says corpus is empty"
+   The first-run crawl may not have finished yet. Check the
+   sidebar for the crawl progress bar. Wait for it to complete,
+   then click Analyze.
+
+"Results take a long time on first click"
+   The first Analyze after launching the app builds a search
+   index from the crawled jobs. This takes 10 to 30 seconds
+   depending on corpus size. Subsequent clicks are fast (1 to
+   3 seconds).
+
+"The app uses a lot of memory"
+   Narou caches the full job corpus and search index in memory
+   for fast queries. On a corpus of 50,000+ jobs, this uses
+   about 800 MB to 1 GB of RAM. If your machine has less than
+   4 GB of free RAM, reduce the corpus by editing
+   data/boards_greenhouse_seed.txt and removing some slugs.
+
+
+TEAM
+----------------------------------------------------------------
+Andrew Dorman      - Project Manager / Integration Lead
+Hugo Olivarez      - ML Engineer, Resume Matching
+Kristopher Norton  - ML Engineer, Fake Post Detection
+Kassel Williams    - Frontend Developer
+Jonathan Witte     - Research and Evaluation Lead
+
+
+================================================================
+  Smart matching. Real opportunities. No more fake jobs.
+================================================================

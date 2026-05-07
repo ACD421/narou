@@ -1,0 +1,149 @@
+{
+  "groups": [
+    {
+      "name": "ng3",
+      "tok_key": "ng3",
+      "dim": 80,
+      "vocab_file": "ng3_vocab.json",
+      "idf_file": "ng3_idf.bin",
+      "models": [
+        {
+          "file": "ng3_s42.bin",
+          "seed": 42,
+          "vocab_size": 4000,
+          "dim": 80,
+          "scale": 0.0033617657609283924,
+          "bytes": 320004
+        },
+        {
+          "file": "ng3_s7.bin",
+          "seed": 7,
+          "vocab_size": 4000,
+          "dim": 80,
+          "scale": 0.003192147007212043,
+          "bytes": 320004
+        }
+      ]
+    },
+    {
+      "name": "ng23big",
+      "tok_key": "ng23",
+      "dim": 120,
+      "vocab_file": "ng23big_vocab.json",
+      "idf_file": "ng23big_idf.bin",
+      "models": [
+        {
+          "file": "ng23big_s42.bin",
+          "seed": 42,
+          "vocab_size": 4586,
+          "dim": 120,
+          "scale": 0.003042794531211257,
+          "bytes": 550324
+        },
+        {
+          "file": "ng23big_s7.bin",
+          "seed": 7,
+          "vocab_size": 4586,
+          "dim": 120,
+          "scale": 0.0032910476438701153,
+          "bytes": 550324
+        }
+      ]
+    },
+    {
+      "name": "ng23",
+      "tok_key": "ng23",
+      "dim": 80,
+      "vocab_file": "ng23_vocab.json",
+      "idf_file": "ng23_idf.bin",
+      "models": [
+        {
+          "file": "ng23_s42.bin",
+          "seed": 42,
+          "vocab_size": 4586,
+          "dim": 80,
+          "scale": 0.0028397180140018463,
+          "bytes": 366884
+        },
+        {
+          "file": "ng23_s7.bin",
+          "seed": 7,
+          "vocab_size": 4586,
+          "dim": 80,
+          "scale": 0.0034063118509948254,
+          "bytes": 366884
+        }
+      ]
+    },
+    {
+      "name": "ng34",
+      "tok_key": "ng34",
+      "dim": 80,
+      "vocab_file": "ng34_vocab.json",
+      "idf_file": "ng34_idf.bin",
+      "models": [
+        {
+          "file": "ng34_s42.bin",
+          "seed": 42,
+          "vocab_size": 6000,
+          "dim": 80,
+          "scale": 0.003058941336348653,
+          "bytes": 480004
+        },
+        {
+          "file": "ng34_s7.bin",
+          "seed": 7,
+          "vocab_size": 6000,
+          "dim": 80,
+          "scale": 0.003445057664066553,
+          "bytes": 480004
+        }
+      ]
+    }
+  ],
+  "feature_names": [
+    "ng3_cos",
+    "ng3_idf",
+    "ng3_l2",
+    "ng23big_cos",
+    "ng23big_idf",
+    "ng23big_l2",
+    "ng23_cos",
+    "ng23_idf",
+    "ng23_l2",
+    "ng34_cos",
+    "ng34_idf",
+    "ng34_l2",
+    "stem",
+    "exact",
+    "contain",
+    "dice",
+    "char3",
+    "lenratio",
+    "numatch",
+    "bridge"
+  ],
+  "weights": [
+    0.011665377464790244,
+    0.07278475742113448,
+    0.06758637130968616,
+    0.00754693020951883,
+    0.08832535905796525,
+    0.1079862140235353,
+    0.018127503500320104,
+    0.0668653502513032,
+    0.07797601532333885,
+    0.03283151471379156,
+    0.06621109885321713,
+    0.06680382915308287,
+    0.020605818366874997,
+    0.02055778959563506,
+    0.03179830875873335,
+    0.0395300140995537,
+    0.017485736661771334,
+    0.013007097014670009,
+    0.16281636738494734,
+    0.009488546720444859
+  ],
+  "synonyms_file": "synonyms.json"
+}
