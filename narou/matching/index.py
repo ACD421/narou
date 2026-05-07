@@ -66,28 +66,30 @@ def build_stage1_index(
     vec_char = TfidfVectorizer(
         analyzer="char_wb",
         ngram_range=(3, 4),
-        min_df=3,
-        max_df=0.85,
-        max_features=20_000,
+        min_df=5,
+        max_df=0.80,
+        max_features=12_000,
         sublinear_tf=True,
         norm="l2",
         lowercase=True,
         strip_accents="unicode",
+        dtype=np.float32,
     )
     mat_char = vec_char.fit_transform(texts)
 
     vec_word = TfidfVectorizer(
         analyzer="word",
         ngram_range=(1, 2),
-        min_df=3,
-        max_df=0.85,
-        max_features=15_000,
+        min_df=5,
+        max_df=0.80,
+        max_features=10_000,
         sublinear_tf=True,
         norm="l2",
         lowercase=True,
         strip_accents="unicode",
         stop_words="english",
         token_pattern=r"\b[a-zA-Z][a-zA-Z0-9+\-_.]+\b",
+        dtype=np.float32,
     )
     mat_word = vec_word.fit_transform(texts)
 

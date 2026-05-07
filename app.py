@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from narou.config import DB_PATH, FRAUD_FLAG_THRESHOLD
+from narou.config import CACHE_DIR, DB_PATH, FRAUD_FLAG_THRESHOLD
 from narou.fraud import build_dedup_index, load_classifier, load_dedup_map
 from narou.ingestion import crawl_in_background, crawl_state
 from narou.matching import (
@@ -158,7 +158,14 @@ def _search_depth_label(val: int) -> tuple[str, str]:
     return "Maximum -- reranks nearly everything, slowest", _RED
 
 
-# ---------- Seed corpus ----------
+# ---------- Seed corpus + index ----------
+
+_INDEX_RELEASE = "https://github.com/ACD421/narou/releases/download/v1.0-data"
+_INDEX_FILES = [
+    "stage1_index.char.npz",
+    "stage1_index.word.npz",
+    "stage1_index.pkl",
+]
 
 
 def _seed_from_gz() -> None:
@@ -172,7 +179,34 @@ def _seed_from_gz() -> None:
         shutil.copyfileobj(gz, out)
 
 
+def _fetch_index() -> None:
+    """Download pre-built TF-IDF index from GitHub Release if not present."""
+    import requests
+    cache_dir = CACHE_DIR
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    # Only download if the main char index is missing
+    if (cache_dir / _INDEX_FILES[0]).exists():
+        return
+    for fname in _INDEX_FILES:
+        dest = cache_dir / fname
+        if dest.exists():
+            continue
+        url = f"{_INDEX_RELEASE}/{fname}"
+        try:
+            r = requests.get(url, stream=True, timeout=120)
+            r.raise_for_status()
+            with open(dest, "wb") as f:
+                for chunk in r.iter_content(chunk_size=1024 * 1024):
+                    f.write(chunk)
+        except Exception:
+            # If download fails, the app will build the index locally
+            if dest.exists():
+                dest.unlink()
+            break
+
+
 _seed_from_gz()
+_fetch_index()
 
 
 # ---------- Cached singletons ----------
