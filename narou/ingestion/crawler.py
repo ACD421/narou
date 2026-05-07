@@ -78,15 +78,6 @@ def _fetch_one_lever(board: str, timeout: float) -> tuple[IngestionResult, float
     return result, (time.time() - start) * 1000
 
 
-def _is_cloud() -> bool:
-    """Detect Streamlit Cloud (runs from /mount/src/)."""
-    return Path(__file__).resolve().as_posix().startswith("/mount/src/")
-
-
-# On Streamlit Cloud (1GB RAM), limit boards to avoid OOM.
-_CLOUD_MAX_BOARDS = 300
-
-
 def crawl_corpus(
     db: Database | None = None,
     *,
@@ -100,11 +91,6 @@ def crawl_corpus(
     db = db or Database(DB_PATH)
     gh_slugs = greenhouse_slugs if greenhouse_slugs is not None else load_slugs(SEED_GREENHOUSE)
     lv_slugs = lever_slugs if lever_slugs is not None else load_slugs(SEED_LEVER)
-
-    if _is_cloud():
-        total_cap = _CLOUD_MAX_BOARDS
-        gh_slugs = gh_slugs[:total_cap]
-        lv_slugs = lv_slugs[:max(0, total_cap - len(gh_slugs))]
 
     total = len(gh_slugs) + len(lv_slugs)
     res = CrawlResult(boards_total=total)
