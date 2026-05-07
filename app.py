@@ -105,29 +105,31 @@ def _style_days_col(s: pd.Series) -> list[str]:
     return styles
 
 
-def _freshness_label(days_active: int | None) -> str:
+def _age_display(days_active: int | None) -> str:
     if days_active is None:
         return "-"
     if days_active < 7:
-        return "New"
+        return f"{days_active}d New"
     if days_active < 14:
-        return "Fresh"
+        return f"{days_active}d Fresh"
     if days_active < 45:
-        return "Open"
+        return f"{days_active}d"
     if days_active < 90:
-        return "Aging"
-    return "Stale"
+        return f"{days_active}d Aging"
+    return f"{days_active}d Stale"
 
 
-def _style_freshness_col(s: pd.Series) -> list[str]:
-    label_colors = {
-        "New": _GREEN, "Fresh": _GREEN, "Open": _YELLOW,
-        "Aging": _ORANGE, "Stale": _RED,
-    }
-    return [
-        f"color: {label_colors.get(v, '')}; font-weight: 600;" if v in label_colors else ""
-        for v in s
-    ]
+def _style_age_col(s: pd.Series) -> list[str]:
+    styles = []
+    for v in s:
+        try:
+            d = int(str(v).split("d")[0])
+        except (ValueError, IndexError):
+            styles.append("")
+            continue
+        c = _days_color(d)
+        styles.append(f"color: {c}; font-weight: 600;" if c else "")
+    return styles
 
 
 def _ghost_threshold_label(val: float) -> tuple[str, str]:
@@ -524,23 +526,21 @@ def _render_matches(result) -> None:
             "Company": m.job.company,
             "Location": m.job.location or "-",
             "Source": m.job.source,
-            "Days": m.job.days_active if m.job.days_active is not None else "-",
-            "Freshness": _freshness_label(m.job.days_active),
+            "Age": _age_display(m.job.days_active),
             "URL": m.job.url or "",
         })
     df = pd.DataFrame(rows)
 
     display_cols = [
         "Rank", "Match %", "Ghost %", "Risk", "Title", "Company",
-        "Location", "Source", "Days", "Freshness", "URL",
+        "Location", "Age", "URL",
     ]
     styled = (
         df[display_cols]
         .style
         .apply(_style_match_col, subset=["Match %"])
         .apply(_style_risk_col, subset=["Ghost %"])
-        .apply(_style_days_col, subset=["Days"])
-        .apply(_style_freshness_col, subset=["Freshness"])
+        .apply(_style_age_col, subset=["Age"])
         .format({"Match %": "{:.0f}%", "Ghost %": "{:.0f}%"})
     )
     st.dataframe(
