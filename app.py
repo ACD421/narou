@@ -266,11 +266,47 @@ def load_dedup_map_cached():
     return m
 
 
-@st.cache_resource(show_spinner="Loading job corpus…")
+class _LazyJobDict:
+    """Dict-like wrapper that loads jobs from SQLite on demand.
+
+    Only stage-1 survivors (~200 jobs) get loaded into memory instead of
+    the entire 53K+ corpus. Saves ~500MB+ of RAM on cloud deployments.
+    """
+
+    def __init__(self, db: Database):
+        self._db = db
+        self._cache: dict[str, Job] = {}
+        self._size: int | None = None
+
+    def get(self, uid: str, default=None):
+        if uid in self._cache:
+            return self._cache[uid]
+        with self._db.connect() as conn:
+            row = conn.execute("SELECT * FROM jobs WHERE uid = ?", (uid,)).fetchone()
+        if row is None:
+            return default
+        job = Database._row_to_job(row)
+        self._cache[uid] = job
+        return job
+
+    def __contains__(self, uid: str) -> bool:
+        return self.get(uid) is not None
+
+    def __len__(self) -> int:
+        if self._size is None:
+            self._size = self._db.stats().get("total_jobs", 0)
+        return self._size
+
+    def __bool__(self) -> bool:
+        return len(self) > 0
+
+    def values(self):
+        return self._cache.values()
+
+
+@st.cache_resource(show_spinner=False)
 def load_jobs_cached():
-    db = get_db()
-    jobs = db.list_all_jobs()
-    return {j.uid: j for j in jobs}
+    return _LazyJobDict(get_db())
 
 
 def _invalidate_corpus_caches() -> None:

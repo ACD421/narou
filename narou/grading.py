@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 from .fraud.scorer import FraudReport
 from .schema import Job
+from .storage import Database
 
 
 @dataclass
@@ -49,11 +50,11 @@ def _letter_from_rate(rate: float) -> str:
 def grade_companies(
     jobs: list[Job],
     reports: list[FraudReport],
-    full_corpus: dict[str, Job] | None = None,
+    db: Database | None = None,
 ) -> list[CompanyGrade]:
     """Grade companies on hiring trustworthiness.
 
-    If full_corpus is provided, grades reflect ALL of a company's postings
+    If db is provided, grades reflect ALL of a company's postings
     in the corpus, not just the ones that matched the user's resume.
     """
     by_uid = {rp.job_uid: rp for rp in reports}
@@ -63,13 +64,17 @@ def grade_companies(
     for j in jobs:
         matched_companies.add(j.company)
 
-    # Build company groups from full corpus if available
+    # Build company groups from full corpus via DB query
     by_company: dict[tuple[str, str], list[Job]] = {}
-    if full_corpus:
-        for j in full_corpus.values():
-            if j.company in matched_companies:
-                by_company.setdefault((j.company, j.source), []).append(j)
-    else:
+    if db:
+        for company in matched_companies:
+            try:
+                cjobs = db.list_jobs(company=company, limit=2000)
+                for j in cjobs:
+                    by_company.setdefault((j.company, j.source), []).append(j)
+            except Exception:
+                pass
+    if not by_company:
         for j in jobs:
             by_company.setdefault((j.company, j.source), []).append(j)
 

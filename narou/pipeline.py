@@ -232,7 +232,7 @@ def analyze_global(
     fraud_by_uid = {r.job_uid: r for r in reports}
     metrics.jobs_flagged = sum(1 for r in reports if r.flagged)
 
-    grades = grade_companies(match_jobs, reports, full_corpus=jobs_by_uid)
+    grades = grade_companies(match_jobs, reports, db=db)
     suggestions = generate_suggestions(resume, matches)
 
     metrics.finish()
