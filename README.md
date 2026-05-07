@@ -55,6 +55,8 @@ Upload a resume (PDF or DOCX), wait for the index to build on first launch (~2 m
 
 SGM (Spectral Geometric Matching) is a non-neural similarity engine combining 12 trained character n-gram features (cosine + IDF-cosine + L2 across 4 tokenization groups) with 7 lexical features and a synonym bridge. Total size: 3.6 MB. On STS-B it scores 0.76 Spearman vs MiniLM's 0.82, at 22x smaller and zero PyTorch dependency.
 
+SGM powers the stage-2 rerank. Stage-1 retrieval uses dual TF-IDF vectorizers (char 3-4 grams + word 1-2 grams) over the full corpus via sparse cosine similarity. This two-stage design searches 53K+ jobs in under a second: the TF-IDF pass is a single matrix multiply, and only the top candidates (default 150) go through the full SGM scoring pipeline.
+
 ### Fraud detection
 
 The ghost-job classifier uses three feature families:
