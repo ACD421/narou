@@ -210,7 +210,8 @@ def _fetch_index() -> None:
 
 
 _seed_from_gz()
-_fetch_index()
+if _is_cloud_env():
+    _fetch_index()
 
 
 # ---------- Cached singletons ----------
