@@ -173,12 +173,24 @@ _INDEX_FILES = [
 
 
 def _seed_from_gz() -> None:
-    """On first launch, decompress the bundled seed corpus if no DB exists."""
+    """Decompress bundled seed corpus if DB is missing or stale.
+
+    On Streamlit Cloud, the repo clone gets a fresh gz on redeploy but
+    the sqlite may persist from a previous session. Re-decompress if
+    the gz is newer than the sqlite (meaning a fresh corpus was committed).
+    """
     import gzip
     import shutil
     seed = DB_PATH.parent / "jobs_seed.sqlite.gz"
-    if DB_PATH.exists() or not seed.exists():
+    if not seed.exists():
         return
+    if DB_PATH.exists():
+        if seed.stat().st_mtime <= DB_PATH.stat().st_mtime:
+            return
+        # Seed is newer -- wipe stale DB and cached index
+        DB_PATH.unlink()
+        for f in CACHE_DIR.glob("stage1_index.*"):
+            f.unlink(missing_ok=True)
     with gzip.open(seed, "rb") as gz, open(DB_PATH, "wb") as out:
         shutil.copyfileobj(gz, out)
 
