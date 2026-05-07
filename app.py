@@ -518,38 +518,29 @@ def _render_matches(result) -> None:
         rp = result.fraud_reports.get(m.job.uid)
         fraud = rp.score if rp else 0.0
         rows.append({
-            "Rank": i + 1,
-            "Match %": round(m.overall * 100, 1),
-            "Ghost %": round(fraud * 100, 1),
-            "Risk": "Ghost" if fraud >= threshold else "OK",
+            "#": i + 1,
+            "Match": round(m.overall * 100, 1),
+            "Ghost": round(fraud * 100, 1),
+            "Age": _age_display(m.job.days_active),
             "Title": m.job.title,
             "Company": m.job.company,
             "Location": m.job.location or "-",
-            "Source": m.job.source,
-            "Age": _age_display(m.job.days_active),
-            "URL": m.job.url or "",
         })
     df = pd.DataFrame(rows)
 
-    display_cols = [
-        "Rank", "Match %", "Ghost %", "Risk", "Title", "Company",
-        "Location", "Age", "URL",
-    ]
     styled = (
-        df[display_cols]
-        .style
-        .apply(_style_match_col, subset=["Match %"])
-        .apply(_style_risk_col, subset=["Ghost %"])
+        df.style
+        .apply(_style_match_col, subset=["Match"])
+        .apply(_style_risk_col, subset=["Ghost"])
         .apply(_style_age_col, subset=["Age"])
-        .format({"Match %": "{:.0f}%", "Ghost %": "{:.0f}%"})
+        .format({"Match": "{:.0f}%", "Ghost": "{:.0f}%"})
     )
     st.dataframe(
         styled, hide_index=True, use_container_width=True, height=540,
-        column_config={"URL": st.column_config.LinkColumn("Open")},
     )
 
     st.subheader("Inspect a match")
-    titles = [f"#{r['Rank']} · {r['Title']} ({r['Company']})" for r in rows]
+    titles = [f"#{r['#']} {r['Title']} at {r['Company']}" for r in rows]
     choice = st.selectbox(
         "Pick a job", list(range(len(rows))), format_func=lambda i: titles[i]
     )
