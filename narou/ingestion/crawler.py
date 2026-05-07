@@ -84,7 +84,7 @@ def _is_cloud() -> bool:
 
 
 # On Streamlit Cloud (1GB RAM), limit boards to avoid OOM.
-_CLOUD_MAX_BOARDS = 200
+_CLOUD_MAX_BOARDS = 800
 
 
 def crawl_corpus(
