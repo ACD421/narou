@@ -218,7 +218,7 @@ def crawl_corpus(
 def crawl_in_background(
     db: Database | None = None,
     *,
-    max_workers: int = 24,
+    max_workers: int = 12,
     min_interval_sec: float = JOB_CACHE_TTL,
     timeout: float = 12.0,
 ) -> threading.Thread | None:

@@ -130,7 +130,7 @@ def corpus_is_empty() -> bool:
         return True
 
 
-@st.cache_resource(show_spinner="Loading match index…")
+@st.cache_resource(show_spinner="Loading match index...")
 def load_index_cached():
     db = get_db()
     try:
@@ -140,7 +140,10 @@ def load_index_cached():
     if idx is None:
         if corpus_is_empty():
             return None
-        idx = build_stage1_index(db)
+        try:
+            idx = build_stage1_index(db)
+        except Exception:
+            return None
     return idx
 
 
