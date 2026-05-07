@@ -66,17 +66,16 @@ jobs:
               print(f'{f}: {os.path.getsize(p)/1024/1024:.1f} MB')
           "
 
-      - name: Commit seed corpus
+      - name: Commit seed corpus and force Streamlit redeploy
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f data/jobs_seed.sqlite.gz
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Auto-refresh job corpus $(date -u +%Y-%m-%d)"
-            git push
-          fi
+          # Touch requirements.txt to force Streamlit Cloud full redeploy
+          sed -i '/^# corpus-refresh/d' requirements.txt
+          echo "# corpus-refresh: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> requirements.txt
+          git add -f data/jobs_seed.sqlite.gz requirements.txt
+          git commit -m "Auto-refresh job corpus $(date -u +%Y-%m-%d)"
+          git push
 
       - name: Generate checksums
         run: |
