@@ -11,4 +11,4 @@ beautifulsoup4>=4.12
 lxml>=5.0
 joblib>=1.3
 pytest>=8.0
-# corpus-refresh: 2026-09-24T11:13:04Z
+# corpus-refresh: 2026-09-28T13:01:28Z
